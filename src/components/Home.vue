@@ -1,34 +1,37 @@
 <template>
   <el-container class="maxcontainer">
     <el-header class="elheader">
-      <el-button icon="el-icon-search" circle></el-button>
+      <el-button icon="el-icon-menu" class="menuicon" circle @click="menuicon"></el-button>
       <span>品优购后台管理系统</span>
-      <el-button class="exit" type="danger" round>退出</el-button>
+      <el-button @click="loginout" class="exit" type="danger" round>退出</el-button>
     </el-header>
     <el-container class="elcontainer">
-      <el-aside width="200px" class="elside">
+      <el-aside :width="collapse?'65px':'180px'"  class="elside">
         <el-menu
+          router
+          :collapse="collapse"
+          :collapse-transition="false"
+          :unique-opened="true"
           default-active="2"
-          class="el-menu-vertical-demo"
-          @open="handleOpen"
-          @close="handleClose"
           background-color="#545c64"
           text-color="#fff"
           active-text-color="#ffd04b"
         >
-          <el-submenu v-for='item in list' :key="item.id" index="1">
+          <el-submenu v-for="(item,i) in list" :key="item.id" :index="item.id.toString()">
             <template slot="title">
-              <i class="el-icon-location"></i>
+              <i :class="['iconfont',iconArr[i]]"></i>
               <span>{{item.authName}}</span>
             </template>
             <el-menu-item-group >
-              <el-menu-item v-for="itemchild in item.children" :key="itemchild.id" index="1">{{itemchild.authName}}</el-menu-item>
+              <el-menu-item class="iconfont el-icon-menu" v-for="itemchild in item.children" :key="itemchild.id" :index="itemchild.path">{{itemchild.authName}}</el-menu-item>
             </el-menu-item-group>
           </el-submenu>
 
         </el-menu>
       </el-aside>
-      <el-main class="elmain">Main</el-main>
+      <el-main>
+        <router-view></router-view>
+      </el-main>
     </el-container>
   </el-container>
 </template>
@@ -38,25 +41,37 @@ export default {
   name: 'Home',
   data () {
     return {
-      list: [{
-        id: '',
-        authName: '',
-        children: [{id: '', authName: ''}]
-      }]
+      list: [],
+      collapse: false,
+      iconArr: ['icon-user-fill', 'icon-cog', 'icon-shoppingcart', 'icon-file', 'icon-chart-area']
     }
   },
   methods: {
-    handleOpen (key, keyPath) {
-      console.log(key, keyPath)
+    menuicon () {
+      this.collapse = !this.collapse
     },
-    handleClose (key, keyPath) {
-      console.log(key, keyPath)
+    async jiazai () {
+      const {data: {data}} = await this.$http.get('menus')
+      this.list = data
+    },
+    // 退出功能
+    loginout () {
+      this.$confirm('真的要退出吗?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        sessionStorage.removeItem('token')
+        this.$router.push('/login')
+        this.$message({
+          type: 'success',
+          message: '用户已退出!'
+        })
+      })
     }
   },
   async mounted () {
-    const {data: {data}} = await this.$http.get('menus')
-    console.log(data)
-    this.list = data
+    this.jiazai()
   }
 }
 </script>
@@ -79,5 +94,11 @@ export default {
 }
 .elcontainer .elside {
     background-color: #545C64;
+}
+.menuicon {
+  margin-right: 10px
+}
+.el-menu {
+  border: 0;
 }
 </style>
